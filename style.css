@@ -1,10 +1,67 @@
-body{
-    height: 95vh;
-    width: 95vw;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color:white;
-    color: rgb(15, 15, 15);
+:root {
+  --bg: #0e0e0e;
+  --fg: #f1f1f1;
+  --snake: #4caf50;
+  --snake-head: #81c784;
+  --food: #ffd54f;
+  --grid: rgba(255, 255, 255, 0.06);
+  --canvas-shadow: rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='light'] {
+  --bg: #ffffff;
+  --fg: #0f0f0f;
+  --snake: #2e7d32;
+  --snake-head: #66bb6a;
+  --food: #ff9800;
+  --grid: rgba(0, 0, 0, 0.06);
+  --canvas-shadow: rgba(0, 0, 0, 0.15);
+}
+
+body {
+  height: 95vh;
+  width: 95vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bg);
+  color: var(--fg);
+}
+
+#hud {
+  margin: 8px 0 12px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+#controls {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 12px;
+}
+
+#controls button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+[data-theme='light'] #controls button {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+@media (pointer: coarse) {
+  #controls button {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+}
+
+canvas#cobra {
+  border-radius: 8px;
+  box-shadow: 0 8px 30px var(--canvas-shadow);
 }
