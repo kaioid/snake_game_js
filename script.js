@@ -5,10 +5,10 @@
 let canvas = document.getElementById('cobra');
 let contexto = canvas.getContext('2d');
 let tamanhoCelula = 32;
-const colunas = Math.floor(canvas.width / tamanhoCelula);
-const linhas = Math.floor(canvas.height / tamanhoCelula);
+let colunas = Math.floor(canvas.width / tamanhoCelula);
+let linhas = Math.floor(canvas.height / tamanhoCelula);
 /** Número total de células do grid (colunas x linhas). */
-const totalCelulas = colunas * linhas;
+let totalCelulas = colunas * linhas;
 
 /**
  * Coordenadas em pixels para índice linear da célula no grid.
@@ -18,6 +18,12 @@ const totalCelulas = colunas * linhas;
  */
 function indiceAPartirDeXY(x, y) {
   return x / tamanhoCelula + (y / tamanhoCelula) * colunas;
+}
+
+function recalcularGrade() {
+  colunas = Math.floor(canvas.width / tamanhoCelula);
+  linhas = Math.floor(canvas.height / tamanhoCelula);
+  totalCelulas = colunas * linhas;
 }
 
 function construirCelulasLivres() {
@@ -540,13 +546,59 @@ function reiniciarJogo() {
   definirVelocidade(configuracao.passoBase);
 }
 
-estado.ocupacao.clear();
-estado.ocupacao.add(indiceAPartirDeXY(estado.cobra[0].x, estado.cobra[0].y));
-construirCelulasLivres();
-removerCelulaLivre(indiceAPartirDeXY(estado.cobra[0].x, estado.cobra[0].y));
-gerarComida();
-atualizarHUD();
-definirVelocidade(configuracao.passoBase);
+function ajustarCanvas(reiniciar = false) {
+  const margem = 12; // respiro
+  const hud = document.getElementById('hud');
+  const controles = document.getElementById('controls');
+  const titulo = document.querySelector('h1');
+
+  const getOuterHeight = (el) => {
+    if (!el) return 0;
+    const rect = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    const mt = parseFloat(cs.marginTop) || 0;
+    const mb = parseFloat(cs.marginBottom) || 0;
+    return rect.height + mt + mb;
+  };
+
+  const viewportLargura = window.visualViewport?.width || window.innerWidth;
+  const viewportAltura = window.visualViewport?.height || window.innerHeight;
+
+  const bodyStyle = getComputedStyle(document.body);
+  const padTop = parseFloat(bodyStyle.paddingTop) || 0;
+  const padBottom = parseFloat(bodyStyle.paddingBottom) || 0;
+  const padLeft = parseFloat(bodyStyle.paddingLeft) || 0;
+  const padRight = parseFloat(bodyStyle.paddingRight) || 0;
+
+  const usadoVertical =
+    getOuterHeight(titulo) + getOuterHeight(hud) + getOuterHeight(controles);
+  const disponivelLargura = Math.max(160, viewportLargura - padLeft - padRight - margem * 2);
+  const disponivelAltura = Math.max(160, viewportAltura - usadoVertical - padTop - padBottom - margem * 2);
+
+  const ladoMax = Math.min(disponivelLargura, disponivelAltura);
+  const ladoAlvo = Math.max(tamanhoCelula, Math.floor(ladoMax / tamanhoCelula) * tamanhoCelula);
+
+  if (canvas.width !== ladoAlvo || canvas.height !== ladoAlvo) {
+    canvas.width = ladoAlvo;
+    canvas.height = ladoAlvo;
+    canvas.style.width = ladoAlvo + 'px';
+    canvas.style.height = ladoAlvo + 'px';
+    recalcularGrade();
+    canvasGrade = null; // rebuild grid cache
+    if (reiniciar) reiniciarJogo();
+  }
+}
+
+window.addEventListener('resize', (() => {
+  let t = null;
+  return () => {
+    if (t) clearTimeout(t);
+    t = setTimeout(() => ajustarCanvas(true), 150);
+  };
+})());
+
+// Ajuste inicial e start do loop
+ajustarCanvas(true);
 requestAnimationFrame(executarLoop);
 
 /**
