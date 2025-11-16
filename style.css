@@ -18,6 +18,13 @@
   --canvas-shadow: rgba(0, 0, 0, 0.15);
 }
 
+/* Base / Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -30,7 +37,8 @@ body {
   background-color: var(--bg);
   color: var(--fg);
   overflow: hidden;
-  box-sizing: border-box;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, Helvetica,
+    sans-serif;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px);
@@ -39,12 +47,26 @@ body {
 
 h1 {
   margin: 10px 0 6px;
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 #hud {
   margin: 8px 0 12px;
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+#hud .sep {
+  margin-left: 16px;
+}
+#hud .hint {
+  margin-left: 16px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+#hud label {
+  margin-left: 16px;
+  font-size: 12px;
+}
+#hud label + label {
+  margin-left: 12px;
 }
 
 #controls {
@@ -60,6 +82,12 @@ h1 {
   background: rgba(255, 255, 255, 0.08);
   color: var(--fg);
   cursor: pointer;
+  transition: background 120ms ease, transform 60ms ease;
+}
+
+#controls button:focus-visible {
+  outline: 2px solid rgba(100, 150, 255, 0.8);
+  outline-offset: 2px;
 }
 
 [data-theme='light'] #controls button {
@@ -77,4 +105,107 @@ h1 {
 canvas#cobra {
   border-radius: 8px;
   box-shadow: 0 8px 30px var(--canvas-shadow);
+  touch-action: none; /* evita pinch/double-tap zoom e pan no canvas */
+}
+
+/* D-Pad direcional (aparece apenas em telas de toque) */
+#controlesDirecao {
+  --dpad-size: 64px;
+  display: none; /* mostrado apenas em devices de toque */
+  margin: 36px 0 6px;
+  gap: 8px;
+  grid-template-areas:
+    '. up .'
+    'left center right'
+    '. down .';
+  grid-template-columns: var(--dpad-size) var(--dpad-size) var(--dpad-size);
+  grid-template-rows: var(--dpad-size) var(--dpad-size) var(--dpad-size);
+  place-items: center;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+#controlesDirecao .dir {
+  width: var(--dpad-size);
+  height: var(--dpad-size);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg);
+  font-size: 20px;
+  line-height: 1;
+  box-shadow: 0 2px 10px var(--canvas-shadow);
+}
+
+#controlesDirecao .dir:focus-visible {
+  outline: 2px solid rgba(100, 150, 255, 0.8);
+  outline-offset: 2px;
+}
+
+#controlesDirecao [data-direcao='up'] {
+  grid-area: up;
+  border-radius: 10px 10px 6px 6px;
+}
+#controlesDirecao [data-direcao='left'] {
+  grid-area: left;
+  border-radius: 10px 6px 6px 10px;
+}
+#controlesDirecao [data-direcao='right'] {
+  grid-area: right;
+  border-radius: 6px 10px 10px 6px;
+}
+#controlesDirecao [data-direcao='down'] {
+  grid-area: down;
+  border-radius: 6px 6px 10px 10px;
+}
+
+#controlesDirecao .dir:active {
+  transform: translateY(1px);
+  filter: brightness(1.1);
+}
+
+[data-theme='light'] #controlesDirecao .dir {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+#controlesDirecao .centro {
+  grid-area: center;
+  width: var(--dpad-size);
+  height: var(--dpad-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#controlesDirecao .centro::after {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+@media (pointer: coarse) {
+  body {
+    justify-content: flex-start;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 6px);
+  }
+  h1 {
+    font-size: 24px;
+    margin: 6px 0 4px;
+  }
+  #hud {
+    display: none;
+  }
+  #controls {
+    margin: 4px 0 8px;
+  }
+  #controlesDirecao {
+    display: grid;
+    --dpad-size: 68px;
+  }
+  #controlesDirecao .dir {
+    font-size: 22px;
+  }
 }

@@ -9,6 +9,54 @@ let colunas = Math.floor(canvas.width / tamanhoCelula);
 let linhas = Math.floor(canvas.height / tamanhoCelula);
 /** Número total de células do grid (colunas x linhas). */
 let totalCelulas = colunas * linhas;
+const mediaCoarse = window.matchMedia
+  ? window.matchMedia('(pointer: coarse)')
+  : null;
+let dispositivoToque = mediaCoarse ? mediaCoarse.matches : false;
+if (mediaCoarse && mediaCoarse.addEventListener) {
+  mediaCoarse.addEventListener('change', (e) => {
+    dispositivoToque = e.matches;
+    ajustarCanvas(true);
+  });
+}
+
+/**
+ * Calcula o passo base (ms) adaptado ao tamanho do grid e ao tipo de dispositivo.
+ * Em grades menores, o passo aumenta levemente (jogo mais lento e confortável).
+ */
+function calcularPassoBase() {
+  const menorLado = Math.max(1, Math.min(colunas, linhas));
+  const referencia = 16;
+  let escala = referencia / menorLado;
+  escala = Math.min(Math.max(escala, 0.85), 1.35);
+  let base = Math.round(configuracao.passoBase * escala);
+  if (dispositivoToque) base = Math.round(base * 1.1);
+  base = Math.max(configuracao.passoMinimo, base);
+  return base;
+}
+
+/**
+ * Parâmetros dinâmicos de progressão de velocidade conforme o tamanho do grid.
+ * Em telas menores: progressão mais suave (passo menor e intervalos maiores).
+ */
+function obterDinamicaVelocidade() {
+  const menorLado = Math.max(1, Math.min(colunas, linhas));
+  const rel = Math.min(Math.max(menorLado / 16, 0.6), 1.5); // 1 ~ grade referência (16)
+  const base = calcularPassoBase();
+  let passoAcel = Math.max(
+    4,
+    Math.round(configuracao.passoAceleracao * (0.6 + 0.4 * Math.min(rel, 1)))
+  );
+  let aCada = Math.max(
+    4,
+    Math.round(configuracao.aceleraACada * (1 + (1 - Math.min(rel, 1)) * 0.6))
+  );
+  if (dispositivoToque) {
+    passoAcel = Math.max(4, Math.round(passoAcel * 0.9));
+    aCada = Math.max(4, Math.round(aCada * 1.1));
+  }
+  return { base, passoAcel, aCada };
+}
 
 /**
  * Coordenadas em pixels para índice linear da célula no grid.
@@ -223,7 +271,46 @@ function criarCobrinha() {
  */
 function desenharComida() {
   contexto.fillStyle = cores.comida;
-  contexto.fillRect(estado.comida.x, estado.comida.y, tamanhoCelula, tamanhoCelula);
+  contexto.fillRect(
+    estado.comida.x,
+    estado.comida.y,
+    tamanhoCelula,
+    tamanhoCelula
+  );
+}
+
+function desenharPlacarCanvas() {
+  const texto = `P: ${estado.pontuacao}  R: ${estado.recorde}`;
+  contexto.save();
+  contexto.font = 'bold 14px Arial';
+  contexto.textBaseline = 'top';
+  const padX = 8;
+  const padY = 6;
+  const x = 8;
+  const y = 6;
+  const w = Math.ceil(contexto.measureText(texto).width) + padX * 2;
+  const h = 20 + padY * 2;
+
+  contexto.beginPath();
+  const r = 10;
+  const rx = x,
+    ry = y;
+  const rw = w,
+    rh = h;
+  contexto.moveTo(rx + r, ry);
+  contexto.arcTo(rx + rw, ry, rx + rw, ry + rh, r);
+  contexto.arcTo(rx + rw, ry + rh, rx, ry + rh, r);
+  contexto.arcTo(rx, ry + rh, rx, ry, r);
+  contexto.arcTo(rx, ry, rx + rw, ry, r);
+  contexto.closePath();
+  contexto.fillStyle = 'rgba(0,0,0,0.35)';
+  contexto.fill();
+
+  contexto.fillStyle = 'white';
+  contexto.shadowColor = 'rgba(0,0,0,0.5)';
+  contexto.shadowBlur = 4;
+  contexto.fillText(texto, x + padX, y + padY);
+  contexto.restore();
 }
 
 /**
@@ -459,15 +546,10 @@ function atualizarPasso() {
     atualizarHUD();
     gerarComida();
     estado.ticksFlashComida = 4;
+    const { base, passoAcel, aCada } = obterDinamicaVelocidade();
     const novaVelocidade = Math.max(
-      /**
-       * Game loop baseado em requestAnimationFrame com passo lógico fixo (accumulator).
-       * Garante consistência da simulação independentemente do FPS.
-       * @param {DOMHighResTimeStamp} ts - timestamp de alta resolução do rAF
-       */
       configuracao.passoMinimo,
-      configuracao.passoBase -
-        Math.floor(estado.pontuacao / configuracao.aceleraACada) * configuracao.passoAceleracao
+      base - Math.floor(estado.pontuacao / aCada) * passoAcel
     );
     if (novaVelocidade !== estado.passoMs) definirVelocidade(novaVelocidade);
     tocarBeep('eat');
@@ -503,10 +585,13 @@ function desenharQuadro() {
   criarBG();
   criarCobrinha();
   desenharComida();
+  if (dispositivoToque) desenharPlacarCanvas();
   if (estado.pausado) {
     desenharSobreposicao('PAUSADO');
   } else if (estado.fimDeJogo) {
-    desenharSobreposicao('GAME OVER - Enter para reiniciar');
+    desenharSobreposicao(
+      dispositivoToque ? 'GAME OVER' : 'GAME OVER - Enter para reiniciar'
+    );
   }
 }
 
@@ -543,14 +628,15 @@ function reiniciarJogo() {
   removerCelulaLivre(startIdx);
   gerarComida();
   atualizarHUD();
-  definirVelocidade(configuracao.passoBase);
+  definirVelocidade(obterDinamicaVelocidade().base);
 }
 
 function ajustarCanvas(reiniciar = false) {
-  const margem = 12; // respiro
+  const margem = 12;
   const hud = document.getElementById('hud');
   const controles = document.getElementById('controls');
   const titulo = document.querySelector('h1');
+  const controlesDirecao = document.getElementById('controlesDirecao');
 
   const getOuterHeight = (el) => {
     if (!el) return 0;
@@ -571,12 +657,24 @@ function ajustarCanvas(reiniciar = false) {
   const padRight = parseFloat(bodyStyle.paddingRight) || 0;
 
   const usadoVertical =
-    getOuterHeight(titulo) + getOuterHeight(hud) + getOuterHeight(controles);
-  const disponivelLargura = Math.max(160, viewportLargura - padLeft - padRight - margem * 2);
-  const disponivelAltura = Math.max(160, viewportAltura - usadoVertical - padTop - padBottom - margem * 2);
+    getOuterHeight(titulo) +
+    getOuterHeight(hud) +
+    getOuterHeight(controles) +
+    getOuterHeight(controlesDirecao);
+  const disponivelLargura = Math.max(
+    160,
+    viewportLargura - padLeft - padRight - margem * 2
+  );
+  const disponivelAltura = Math.max(
+    160,
+    viewportAltura - usadoVertical - padTop - padBottom - margem * 2
+  );
 
   const ladoMax = Math.min(disponivelLargura, disponivelAltura);
-  const ladoAlvo = Math.max(tamanhoCelula, Math.floor(ladoMax / tamanhoCelula) * tamanhoCelula);
+  const ladoAlvo = Math.max(
+    tamanhoCelula,
+    Math.floor(ladoMax / tamanhoCelula) * tamanhoCelula
+  );
 
   if (canvas.width !== ladoAlvo || canvas.height !== ladoAlvo) {
     canvas.width = ladoAlvo;
@@ -584,20 +682,22 @@ function ajustarCanvas(reiniciar = false) {
     canvas.style.width = ladoAlvo + 'px';
     canvas.style.height = ladoAlvo + 'px';
     recalcularGrade();
-    canvasGrade = null; // rebuild grid cache
+    canvasGrade = null;
     if (reiniciar) reiniciarJogo();
   }
 }
 
-window.addEventListener('resize', (() => {
-  let t = null;
-  return () => {
-    if (t) clearTimeout(t);
-    t = setTimeout(() => ajustarCanvas(true), 150);
-  };
-})());
+window.addEventListener(
+  'resize',
+  (() => {
+    let t = null;
+    return () => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => ajustarCanvas(true), 150);
+    };
+  })()
+);
 
-// Ajuste inicial e start do loop
 ajustarCanvas(true);
 requestAnimationFrame(executarLoop);
 
@@ -669,7 +769,9 @@ function tocarBeep(tipo) {
   } catch (_) {}
 }
 
-window.addEventListener('pointerdown', () => garantirContextoAudio(), { once: true });
+window.addEventListener('pointerdown', () => garantirContextoAudio(), {
+  once: true,
+});
 
 let toqueInicioX = 0,
   toqueInicioY = 0;
@@ -683,6 +785,13 @@ canvas.addEventListener(
   },
   { passive: true }
 );
+
+document.addEventListener('dblclick', (e) => e.preventDefault());
+['gesturestart', 'gesturechange', 'gestureend'].forEach((ev) => {
+  document.addEventListener(ev, (e) => {
+    e.preventDefault();
+  });
+});
 
 canvas.addEventListener(
   'touchend',
@@ -703,3 +812,22 @@ canvas.addEventListener(
   },
   { passive: true }
 );
+
+function configurarBotoesDirecao() {
+  const container = document.getElementById('controlesDirecao');
+  if (!container) return;
+  container.querySelectorAll('[data-direcao]')?.forEach((btn) => {
+    const dir = btn.getAttribute('data-direcao');
+    const handler = (ev) => {
+      ev.preventDefault();
+      if (!dir) return;
+      if (!direcoesOpostas(dir, estado.direcao)) {
+        estado.proximaDirecao = dir;
+      }
+    };
+    btn.addEventListener('pointerdown', handler, { passive: false });
+    btn.addEventListener('click', handler, { passive: false });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', configurarBotoesDirecao);
