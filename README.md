@@ -1,4 +1,4 @@
-# Snake Game (v2.2) (pt-BR)
+# Snake Game (v2.3) (pt-BR)
 
 Jogo da Cobrinha simples em HTML5 Canvas, com controles por teclado, swipe (toque) e botões na interface. Implementa um loop lógico de passo fixo para garantir consistência, com melhorias de performance como grade pré-renderizada (offscreen), verificação O(1) de ocupação e reaproveitamento de objetos.
 
@@ -8,6 +8,7 @@ Jogo da Cobrinha simples em HTML5 Canvas, com controles por teclado, swipe (toqu
 - Controles: Setas/WASD, Swipe, Botões (Pausar/Reiniciar) e D‑Pad direcional (toque)
 - Preferências: Som e Tema (Claro/Escuro) com persistência em `localStorage`
 - Performance: spawn de comida O(1), grade offscreen, pooling de segmentos, colisão O(1)
+- Mobile: HUD no canvas, anti‑zoom e tamanho de célula adaptativo
 
 ## Construção do Projeto
 
@@ -34,6 +35,8 @@ Jogo da Cobrinha simples em HTML5 Canvas, com controles por teclado, swipe (toqu
 - (v2.2):
   - Suporte mobile completo: layout otimizado para toque, D‑Pad com visual de controle, HUD reduzido dentro do canvas e proteção contra zoom acidental.
   - Velocidade adaptativa por tamanho de grade e leve progressão em telas menores.
+- (v2.3):
+  - Células adaptativas: o tamanho de cada célula se ajusta ao lado útil do canvas para caber mais células em telas menores (mantendo múltiplos exatos para a grade).
 
 ## Como Executar
 
@@ -97,7 +100,7 @@ script.js     # Lógica do jogo, renderização e entrada
   - `localStorage['soundEnabled']`: som habilitado
   - `localStorage['theme']`: tema atual ("light" ou "dark")
 
-## Suporte Mobile (v2.2)
+## Suporte Mobile (v2.2+)
 
 - Canvas responsivo: calcula área disponível (título, HUD, controles e safe‑area) e usa o maior quadrado possível, sempre em múltiplos de `tamanhoCelula`.
 - Layout focado no jogo: em toque, a página fica alinhada ao topo; o HUD de pontuação do DOM é ocultado e um placar compacto é desenhado dentro do canvas, com fundo semi‑transparente.
@@ -105,6 +108,7 @@ script.js     # Lógica do jogo, renderização e entrada
 - Anti‑zoom: `meta viewport` com `user-scalable=no`, `maximum-scale=1`; `touch-action: none` no canvas; bloqueio de `dblclick` e gestos (`gesturestart/change/end`) para evitar zoom acidental.
 - Mensagens otimizadas: em telas de toque, o Game Over mostra apenas "GAME OVER".
 - Velocidade adaptativa: `calcularPassoBase()` e `obterDinamicaVelocidade()` ajustam a velocidade base e a progressão conforme o tamanho do grid e se o dispositivo é touch.
+- Células adaptativas (v2.3): define o tamanho da célula de 12–32px com alvo de ~22 células por lado em toque (~16 no desktop), aumentando a densidade do tabuleiro em telas pequenas.
 
 ### Decisões de Design
 

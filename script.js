@@ -41,7 +41,7 @@ function calcularPassoBase() {
  */
 function obterDinamicaVelocidade() {
   const menorLado = Math.max(1, Math.min(colunas, linhas));
-  const rel = Math.min(Math.max(menorLado / 16, 0.6), 1.5); // 1 ~ grade referência (16)
+  const rel = Math.min(Math.max(menorLado / 16, 0.6), 1.5);
   const base = calcularPassoBase();
   let passoAcel = Math.max(
     4,
@@ -168,6 +168,10 @@ const configuracao = {
   passoAceleracao: 10,
   tamanhoOlho: 6,
   deslocamentoOlho: 6,
+  celulaMin: 12,
+  celulaMax: 32,
+  alvoCelulasTouch: 22,
+  alvoCelulasDesktop: 16,
 };
 
 /**
@@ -671,16 +675,32 @@ function ajustarCanvas(reiniciar = false) {
   );
 
   const ladoMax = Math.min(disponivelLargura, disponivelAltura);
-  const ladoAlvo = Math.max(
-    tamanhoCelula,
-    Math.floor(ladoMax / tamanhoCelula) * tamanhoCelula
+
+  const alvoCelulas = dispositivoToque
+    ? configuracao.alvoCelulasTouch
+    : configuracao.alvoCelulasDesktop;
+  let novoTamanho = Math.floor(ladoMax / Math.max(1, alvoCelulas));
+  novoTamanho = Math.max(
+    configuracao.celulaMin,
+    Math.min(configuracao.celulaMax, novoTamanho)
   );
 
-  if (canvas.width !== ladoAlvo || canvas.height !== ladoAlvo) {
+  const ladoAlvo = Math.max(
+    novoTamanho,
+    Math.floor(ladoMax / novoTamanho) * novoTamanho
+  );
+
+  const mudouTamanhoCelula = tamanhoCelula !== novoTamanho;
+  if (
+    canvas.width !== ladoAlvo ||
+    canvas.height !== ladoAlvo ||
+    mudouTamanhoCelula
+  ) {
     canvas.width = ladoAlvo;
     canvas.height = ladoAlvo;
     canvas.style.width = ladoAlvo + 'px';
     canvas.style.height = ladoAlvo + 'px';
+    if (mudouTamanhoCelula) tamanhoCelula = novoTamanho;
     recalcularGrade();
     canvasGrade = null;
     if (reiniciar) reiniciarJogo();
