@@ -1,8 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Snake Game</title>
     <link rel="stylesheet" href="style.css" />
@@ -12,25 +15,34 @@
     <h1>SNAKE GAME!</h1>
     <div id="hud">
       <span>Pontos: <strong id="pontuacao">0</strong></span>
-      <span style="margin-left: 16px"
-        >Recorde: <strong id="recorde">0</strong></span
-      >
-      <span style="margin-left: 16px; font-size: 12px; opacity: 0.8"
+      <span class="sep">Recorde: <strong id="recorde">0</strong></span>
+      <span class="hint"
         >Setas/WASD | Swipe • Space: Pausar • Enter: Reiniciar</span
       >
-      <label style="margin-left: 16px; font-size: 12px">
+      <label>
         <input type="checkbox" id="alternarSom" checked />
         Som
       </label>
-      <label style="margin-left: 12px; font-size: 12px">
+      <label>
         <input type="checkbox" id="alternarTema" />
         Tema Claro
       </label>
     </div>
     <div id="controls" role="group" aria-label="Controles de jogo">
-      <button id="btnPausar" type="button" aria-label="Pausar ou retomar">Pausar</button>
-      <button id="btnReiniciar" type="button" aria-label="Reiniciar jogo">Reiniciar</button>
+      <button id="btnPausar" type="button" aria-label="Pausar ou retomar">
+        Pausar
+      </button>
+      <button id="btnReiniciar" type="button" aria-label="Reiniciar jogo">
+        Reiniciar
+      </button>
     </div>
     <canvas id="cobra" width="512" height="512"></canvas>
+    <div id="controlesDirecao" role="group" aria-label="Direções (toque)">
+      <button class="dir" data-direcao="up" aria-label="Cima">▲</button>
+      <button class="dir" data-direcao="left" aria-label="Esquerda">◀</button>
+      <div class="centro" aria-hidden="true"></div>
+      <button class="dir" data-direcao="right" aria-label="Direita">▶</button>
+      <button class="dir" data-direcao="down" aria-label="Baixo">▼</button>
+    </div>
   </body>
 </html>

@@ -1,11 +1,11 @@
-# Snake Game (v2.1) (pt-BR)
+# Snake Game (v2.2) (pt-BR)
 
 Jogo da Cobrinha simples em HTML5 Canvas, com controles por teclado, swipe (toque) e botões na interface. Implementa um loop lógico de passo fixo para garantir consistência, com melhorias de performance como grade pré-renderizada (offscreen), verificação O(1) de ocupação e reaproveitamento de objetos.
 
 ## Visão Geral
 
 - Canvas: `index.html` + `style.css` + `script.js`
-- Controles: Setas/WASD, Swipe, Botões (Pausar/Reiniciar)
+- Controles: Setas/WASD, Swipe, Botões (Pausar/Reiniciar) e D‑Pad direcional (toque)
 - Preferências: Som e Tema (Claro/Escuro) com persistência em `localStorage`
 - Performance: spawn de comida O(1), grade offscreen, pooling de segmentos, colisão O(1)
 
@@ -23,16 +23,17 @@ Jogo da Cobrinha simples em HTML5 Canvas, com controles por teclado, swipe (toqu
   - Sem botões de toque (apenas teclado e swipe); ids e nomes mistos pt/en.
   - Ainda assim, já usava loop de passo fixo com `requestAnimationFrame` + `accumulator`.
 - (v2):
-
   - Grade pré-renderizada em canvas offscreen (menos draw calls por frame).
   - Colisão O(1) via `Set` de ocupação.
   - Spawn de comida O(1) usando estrutura de “células livres” (swap-pop + mapa posicional).
   - Reaproveitamento do segmento da cauda (pooling) ao mover sem crescer.
   - Botões de Pausar/Reiniciar para toque; ids/variáveis padronizados em pt-BR.
   - Comentários JSDoc e seções de README detalhadas.
-
-- (v2.1)
-  Esta versão traz suporte responsivo para diferentes tamanhos de tela, evitando scroll e cortes na borda inferior.
+- (v2.1):
+  - Suporte responsivo para diferentes tamanhos de tela, evitando scroll e cortes na borda inferior (ajuste do canvas ao viewport com `visualViewport`/`innerWidth|Height`, múltiplos de célula e safe-area).
+- (v2.2):
+  - Suporte mobile completo: layout otimizado para toque, D‑Pad com visual de controle, HUD reduzido dentro do canvas e proteção contra zoom acidental.
+  - Velocidade adaptativa por tamanho de grade e leve progressão em telas menores.
 
 ## Como Executar
 
@@ -73,6 +74,7 @@ Start-Process http://localhost:8080
 - Pausar/Retomar: tecla Espaço ou botão "Pausar/Retomar"
 - Reiniciar: tecla Enter (após Game Over) ou botão "Reiniciar"
 - Dispositivos de toque: swipe para mover (direita/esquerda/cima/baixo)
+- D‑Pad (toque): botões ▲ ◀ ▶ ▼ logo abaixo do canvas
 - Alternar som: checkbox "Som"
 - Alternar tema: checkbox "Tema Claro"
 
@@ -94,6 +96,15 @@ script.js     # Lógica do jogo, renderização e entrada
   - `localStorage['highScore']`: recorde
   - `localStorage['soundEnabled']`: som habilitado
   - `localStorage['theme']`: tema atual ("light" ou "dark")
+
+## Suporte Mobile (v2.2)
+
+- Canvas responsivo: calcula área disponível (título, HUD, controles e safe‑area) e usa o maior quadrado possível, sempre em múltiplos de `tamanhoCelula`.
+- Layout focado no jogo: em toque, a página fica alinhada ao topo; o HUD de pontuação do DOM é ocultado e um placar compacto é desenhado dentro do canvas, com fundo semi‑transparente.
+- D‑Pad como controle: grade 3×3 com botões ▲ ◀ ▶ ▼, cantos arredondados por braço, feedback de pressão e foco acessível (`:focus-visible`).
+- Anti‑zoom: `meta viewport` com `user-scalable=no`, `maximum-scale=1`; `touch-action: none` no canvas; bloqueio de `dblclick` e gestos (`gesturestart/change/end`) para evitar zoom acidental.
+- Mensagens otimizadas: em telas de toque, o Game Over mostra apenas "GAME OVER".
+- Velocidade adaptativa: `calcularPassoBase()` e `obterDinamicaVelocidade()` ajustam a velocidade base e a progressão conforme o tamanho do grid e se o dispositivo é touch.
 
 ### Decisões de Design
 
